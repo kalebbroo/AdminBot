@@ -17,11 +17,21 @@ namespace AdminBot
 
         public async Task MainAsync()
         {
-            _client = new DiscordSocketClient();
+            var envFilePath = Path.GetFullPath("../../../.env");
+
+            var envOptions = new DotEnvOptions(envFilePaths: new[] { envFilePath });
+            DotEnv.Load(envOptions);
+
+            var config = new DiscordSocketConfig
+            {
+                GatewayIntents = GatewayIntents.All
+            };
+
+            _client = new DiscordSocketClient(config);
             _client.Log += Log;
 
-            // Replace this with .env file
-            var token = "token";
+            // Obtain the .env variable "BOT_TOKEN". Be sure to create the file locally and add the token in.
+            var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
@@ -30,9 +40,9 @@ namespace AdminBot
             await Task.Delay(-1);
 
         }
-        private Task Log(LogMessage msg)
+        private Task Log(LogMessage message)
         {
-            Console.WriteLine(msg.ToString());
+            Console.WriteLine(message.ToString());
             return Task.CompletedTask;
         }
 
