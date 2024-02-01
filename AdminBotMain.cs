@@ -75,7 +75,7 @@ namespace AdminBot
             Console.WriteLine($"\nLogged in as {_client.CurrentUser.Username}\n" +
                 $"Registered {_interactions.ContextCommands.Count} slash commands\n" +
                 $"Bot is a member of {_client.Guilds.Count} guilds\n");
-            _client.SetGameAsync("/help", null, ActivityType.Listening);
+            await _client.SetGameAsync("/help", null, ActivityType.Listening);
         }
 
     }
