@@ -7,6 +7,8 @@ using dotenv.net;
 using dotenv.net.Utilities;
 using System.IO;
 using AdminBot.Core;
+using System.Reflection;
+using System.Windows.Input;
 
 namespace AdminBot
 { 
@@ -31,7 +33,8 @@ namespace AdminBot
 
             var config = new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.All
+                GatewayIntents = GatewayIntents.All,
+                LogLevel = LogSeverity.Debug
             };
 
             // Create a new instance of DiscordSocketClient, pass in config.
@@ -45,7 +48,8 @@ namespace AdminBot
 
             // Register command modules with the InteractionService. Tells it to scan Core.AdminCommands for classes that define slash commands.
             //await _interactions.AddModulesAsync(typeof(Core.AdminCommands).Assembly, null);
-            await _interactions.AddModulesAsync(typeof(AdminCommands).Assembly, null);
+            //await _interactions.AddModulesAsync(typeof(AdminCommands).Assembly, null);
+            //await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), null);
 
             // Obtain the .env variable "BOT_TOKEN". Be sure to create the file locally and add the token in.
             var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
@@ -73,6 +77,7 @@ namespace AdminBot
             // Things to be run when the bot is ready
             if (_client.Guilds.Any())
             {
+                await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), null);
                 var guildId = _client.Guilds.First().Id;
                 //await _interactions.AddCommandsToGuildAsync(guildId, true);
                 await _interactions.RegisterCommandsGloballyAsync(true);
