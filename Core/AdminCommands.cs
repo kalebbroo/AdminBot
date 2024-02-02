@@ -20,6 +20,7 @@ namespace AdminBot.Core
         [SlashCommand("setup_rules", "Sets up the rules for the server")]
         public async Task SetupRules()
         {
+            await DeferAsync(ephemeral: true);
             // Define the text channel with the name "rules"
             var RulesChannel = Context.Guild.TextChannels.FirstOrDefault(x => x.Name == "rules");
 
@@ -29,6 +30,7 @@ namespace AdminBot.Core
                 await Context.Guild.CreateTextChannelAsync("rules");
             }
             // Send the modal to the user
+            await FollowupAsync("test the command", ephemeral: true);
 
         }
 
@@ -82,7 +84,13 @@ namespace AdminBot.Core
             var embed = EmbedCreator.CreateEmbed(parameters);
 
             // Send the embed
-            await Context.Interaction.RespondAsync(embed: embed);
+            await RespondAsync(embed: embed);
+        }
+
+        [SlashCommand("ping", "Test command")]
+        public async Task Ping()
+        {
+            await RespondAsync("Pong!", ephemeral: true);
         }
 
     }
