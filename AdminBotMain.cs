@@ -77,10 +77,15 @@ namespace AdminBot
             // Things to be run when the bot is ready
             if (_client.Guilds.Any())
             {
+                // Register command modules with the InteractionService.
+                // Tels it to scan the whole assembly for classes that define slash commands.
                 await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), null);
+
+                // Get the ID of the first guild the bot is a member of
+                // Then register the commands to that guild
                 var guildId = _client.Guilds.First().Id;
-                //await _interactions.AddCommandsToGuildAsync(guildId, true);
-                await _interactions.RegisterCommandsGloballyAsync(true);
+                await _interactions.AddCommandsToGuildAsync(guildId, true);
+                //await _interactions.RegisterCommandsGloballyAsync(true);
             }
             else
             {
