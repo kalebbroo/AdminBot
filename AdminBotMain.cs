@@ -6,6 +6,7 @@ using Discord.Interactions;
 using dotenv.net;
 using dotenv.net.Utilities;
 using System.IO;
+using AdminBot.Core;
 
 namespace AdminBot
 { 
@@ -14,6 +15,8 @@ namespace AdminBot
         // Create a private DiscordSocketClient and InteractionService
         private DiscordSocketClient? _client;
         private InteractionService? _interactions;
+
+        public object? Context { get; private set; }
 
         public static Task Main(string[] args) => new AdminBotMain().MainAsync();
 
@@ -28,19 +31,21 @@ namespace AdminBot
 
             var config = new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.AllUnprivileged
+                GatewayIntents = GatewayIntents.All
             };
 
             // Create a new instance of DiscordSocketClient, pass in config.
             _client = new DiscordSocketClient(config);
             // Create a new instance of InteractionService, pass in _client. Needed to listen for interactions.
             _interactions = new InteractionService(_client);
+
             // Add the Log and ReadyAsync methods to the client's Log and Ready events.
             _client.Log += Log;
             _client.Ready += ReadyAsync;
 
-            // Register command modules with the InteractionService. Tells it to scan AdminBotMain for classes that define slash commands.
-            await _interactions.AddModulesAsync(typeof(AdminBotMain).Assembly, null);
+            // Register command modules with the InteractionService. Tells it to scan Core.AdminCommands for classes that define slash commands.
+            //await _interactions.AddModulesAsync(typeof(Core.AdminCommands).Assembly, null);
+            await _interactions.AddModulesAsync(typeof(AdminCommands).Assembly, null);
 
             // Obtain the .env variable "BOT_TOKEN". Be sure to create the file locally and add the token in.
             var token = Environment.GetEnvironmentVariable("BOT_TOKEN");
@@ -55,7 +60,12 @@ namespace AdminBot
         }
         private Task Log(LogMessage message)
         {
-            Console.WriteLine(message.ToString());
+            Console.WriteLine($"{DateTime.Now} [{message.Severity}] {message.Source}: {message.Message}");
+            if (message.Exception is not null) // Check if there is an exception
+            {
+                // Log the full exception, including the stack trace
+                Console.WriteLine($"Exception: {message.Exception.ToString()}");
+            }
             return Task.CompletedTask;
         }
         private async Task ReadyAsync()
@@ -64,8 +74,8 @@ namespace AdminBot
             if (_client.Guilds.Any())
             {
                 var guildId = _client.Guilds.First().Id;
-                await _interactions.AddCommandsToGuildAsync(guildId, true);
-                //await _interactions.RegisterCommandsGloballyAsync(true);
+                //await _interactions.AddCommandsToGuildAsync(guildId, true);
+                await _interactions.RegisterCommandsGloballyAsync(true);
             }
             else
             {
