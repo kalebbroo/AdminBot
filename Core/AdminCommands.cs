@@ -7,7 +7,6 @@ namespace AdminBot.Core
     public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
     {
-        // Basic slash implimentation. Still need to add the actual code and the interaction handler
         [SlashCommand("setup_rules", "Sets up the rules for the server")]
         public async Task SetupRules()
         {
@@ -76,9 +75,29 @@ namespace AdminBot.Core
         [ModalInteraction("setup_rules_modal")]
         public async Task OnRulesModalSubmit(RulesModal modal)
         {
-            // Add what to do when the modal is submitted
-            await DeferAsync();
-            await RespondAsync("Rules have been set up!");
+            await DeferAsync(ephemeral: true);
+            // Take the input from the modal and create an embed
+            var title = modal.Title;
+            var description = modal.Description;
+
+            var embed = new EmbedBuilder()
+                .WithTitle(title)
+                .WithDescription(description)
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp()
+                .Build();
+
+            // Define the text channel with the name "rules" get from DB in future
+            var RulesChannel = Context.Guild.TextChannels.FirstOrDefault(x => x.Name == "rules");
+            // Delete the previous message
+            var messages = await RulesChannel.GetMessagesAsync(1).FlattenAsync();
+            var message = messages.FirstOrDefault();
+            if (message is not null)
+            {
+                await message.DeleteAsync();
+            }
+
+            await RulesChannel.SendMessageAsync(embed: embed);
         }
 
         // Add command to test the embed builder

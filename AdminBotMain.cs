@@ -1,14 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using Discord.Interactions;
 using dotenv.net;
-using dotenv.net.Utilities;
-using System.IO;
-using AdminBot.Core;
 using System.Reflection;
-using System.Windows.Input;
 
 namespace AdminBot
 { 
