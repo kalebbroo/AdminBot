@@ -100,38 +100,6 @@ namespace AdminBot.Core
             await RulesChannel.SendMessageAsync(embed: embed);
         }
 
-        // Add command to test the embed builder
-        [SlashCommand("test_embed", "Tests the embed builder")]
-        public async Task TestEmbed()
-        {
-            try
-            {
-                // Create a new embed
-                var parameters = new Dictionary<string, string>
-                {
-                    { "title", "My Title" },
-                    { "description", "My Description" },
-                    { "url", "https://example.com" },
-                    { "thumbnail", "https://example.com/thumbnail.png" },
-                    { "image", "https://example.com/image.png" },
-                    { "author", "My Author" },
-                    { "color", "FF5733" },
-                    { "footer", "My Footer" },
-                    { "timestamp", "2022-01-01T00:00:00+00:00" },
-                    { "field", "Field 1|Value 1" },
-                    { "field", "Field 2|Value 2" },
-                };
-                var embed = EmbedCreator.CreateEmbed(parameters);
-
-                // Send the embed
-                await RespondAsync(embed: embed);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-        }
-
         [SlashCommand("ping", "Test command")]
         public async Task Ping()
         {
