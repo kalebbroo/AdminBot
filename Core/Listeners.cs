@@ -20,8 +20,9 @@ namespace AdminBot.Core
         // Subscribe to events we want to listen to.
         public void RegisterListeners()
         {
-            // Subscribes to the GuildMemberUpdated event with our custom OnGuildMemberUpdatedAsync method.
+            // Subscribes to the event with our custom methods.
             _client.GuildMemberUpdated += OnGuildMemberUpdatedAsync;
+            _client.UserJoined += OnUserJoinedAsync;
 
         }
 
@@ -42,6 +43,22 @@ namespace AdminBot.Core
                 // TODO: Use the DB to get the channel and to save user info.
                 await after.Guild.DefaultChannel.SendMessageAsync($"User {after.Mention} has changed their nickname from {beforeNickname} to {afterNickname}.");
             }
+        }
+
+        // This method is called whenever a user joins the server.
+        private async Task OnUserJoinedAsync(SocketGuildUser user)
+        {
+            // Sends a message to the server's default channel about the user joining.
+            // TODO: Create and upload a welcome card to use instead of an embed.
+            var embed = new EmbedBuilder()
+                .WithTitle("User Joined")
+                .WithDescription($"User {user.Mention} has joined the server.")
+                .WithColor(Color.Green)
+                .WithCurrentTimestamp()
+                .Build();
+
+            // TODO: Use the DB to get the channel and to save user info. 
+            await user.Guild.DefaultChannel.SendMessageAsync(embed: embed);
         }
     }
 }
