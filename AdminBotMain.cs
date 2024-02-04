@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Discord.Interactions;
 using dotenv.net;
 using System.Reflection;
+using AdminBot.Core;
 
 namespace AdminBot
 { 
@@ -41,6 +42,10 @@ namespace AdminBot
                 var ctx = new SocketInteractionContext(_client, interaction);
                 await _interactions.ExecuteCommandAsync(ctx, services: null);
             };
+
+            // Instantiate your Listeners class and register the listeners
+            var listeners = new Listeners(_client);
+            listeners.RegisterListeners();
 
             // Add the Log and ReadyAsync methods to the client's Log and Ready events.
             _client.Log += Log;
