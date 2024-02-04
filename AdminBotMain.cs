@@ -12,6 +12,7 @@ namespace AdminBot
         // Create a private DiscordSocketClient and InteractionService
         private DiscordSocketClient? _client;
         private InteractionService? _interactions;
+        private Database? _database;
 
         public static Task Main(string[] args) => new AdminBotMain().MainAsync();
 
@@ -32,6 +33,8 @@ namespace AdminBot
 
             // Create a new instance of DiscordSocketClient, pass in config.
             _client = new DiscordSocketClient(config);
+            // Initialize the Database
+            _database = new Database();
             // Create a new instance of InteractionService, pass in _client. Needed for interactions.
             _interactions = new InteractionService(_client);
 
