@@ -24,7 +24,7 @@ echo Found .env file
 
 REM Run Docker Compose with the .env file
 echo Running Docker Compose...
-docker-compose --env-file "%ENV_FILE%" -f Docker/docker-compose.yml up --build
+docker-compose -p adminbot --env-file "%ENV_FILE%" -f Docker/docker-compose.yml up --build
 
 pause
 exit /b 0
