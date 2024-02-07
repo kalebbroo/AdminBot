@@ -70,6 +70,5 @@ namespace AdminBot.Core
             await _database.UpdateAddUser(collection, userdata);
         }
 
-        }
     }
 }
