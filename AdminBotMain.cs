@@ -47,7 +47,8 @@ namespace AdminBot
             };
 
             // Instantiate your Listeners class and register the listeners
-            var listeners = new Listeners(_client);
+            var database = new Database();
+            var listeners = new Listeners(_client, database);
             listeners.RegisterListeners();
 
             // Add the Log and ReadyAsync methods to the client's Log and Ready events.

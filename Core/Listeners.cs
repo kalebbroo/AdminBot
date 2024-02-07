@@ -9,12 +9,14 @@ namespace AdminBot.Core
     {
         // Holds a reference to the Discord client to interact with the Discord API.
         private readonly DiscordSocketClient _client;
+        private readonly Database _database;
 
         // Constructor that takes the Discord client as a parameter.
         // This allows the Listeners class to use the client passed from elsewhere in the bot.
-        public Listeners(DiscordSocketClient client)
+        public Listeners(DiscordSocketClient client, Database database)
         {
             _client = client; // Saves the passed client for use in this class.
+            _database = database;
         }
 
         // Subscribe to events we want to listen to.
@@ -59,6 +61,15 @@ namespace AdminBot.Core
 
             // TODO: Use the DB to get the channel and to save user info. 
             await user.Guild.DefaultChannel.SendMessageAsync(embed: embed);
+
+            // TODO: Add the user to the DB if they are not already in it.
+            ulong userid = user.Id;
+            ulong guildid = user.Guild.Id;
+            var userdata = await _database.GetUserData(userid, guildid);
+            var collection = _database.GetCollection<UserData>("Users");
+            await _database.UpdateAddUser(collection, userdata);
+        }
+
         }
     }
 }
