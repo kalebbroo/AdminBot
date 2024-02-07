@@ -86,17 +86,19 @@ namespace AdminBot.Core
                     }
                 };
             }
-            // This returns null if the user isn't found, make sure to handle that
             return userData;
         }
 
-        public async Task UpdateAddUser(IMongoCollection<UserData> collection, UserData userData)
+        public async Task UpdateAddUser(UserData userData)
         {
-            var filter = Builders<UserData>.Filter.Eq("userId", userData.UserId);
-            await collection.InsertOneAsync(userData);
-            Console.WriteLine($"User {userData.UserId} added to the database.");
-        }
+            var usersCollection = GetCollection<UserData>("Users");
+            var filter = Builders<UserData>.Filter.Eq(u => u.UserId, userData.UserId);
 
+            var updateOptions = new ReplaceOptions { IsUpsert = true };
+            await usersCollection.ReplaceOneAsync(filter, userData, updateOptions);
+
+            Console.WriteLine($"User {userData.UserId} updated or added to the database.");
+        }
     }
 
     /*
