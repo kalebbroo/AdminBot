@@ -9,16 +9,24 @@ namespace AdminBot.Core
     internal class XpLevels
     {
         private readonly Database _database;
-        // TODO: env variables are strings, so we need to parse them to int. Lookup how to do this in C#
-        var BaseXp = Environment.GetEnvironmentVariable("BASE_XP");
-        var XpMultiplier = Environment.GetEnvironmentVariable("XP_MULTIPLIER");
+        private readonly int BaseXp;
+        private readonly double XpMultiplier;
 
+        /* XpLevels constructor
+         * A constructor that takes a Database object as a parameter.
+         * This runs when a new instance of XpLevels is created.
+         * Sets the _database field to the passed Database object.
+         */
+        public XpLevels(Database database)
+        {
+            _database = database;
+            BaseXp = int.Parse(Environment.GetEnvironmentVariable("BASE_XP") ?? "100");
+            XpMultiplier = double.Parse(Environment.GetEnvironmentVariable("XP_MULTIPLIER") ?? "1.5");
+        }
         public int XpToNextLevel(int level)
         {
-            int baseXp = int.Parse(BaseXp ?? "100");
-            double xpMultiplier = double.Parse(XpMultiplier ?? "1.5");
 
-            return (int)(baseXp * Math.Pow(xpMultiplier, level - 1));
+            return (int)(BaseXp * Math.Pow(XpMultiplier, level - 1));
         }
 
         public async Task AddXp(ulong userId, ulong guildId, int xpToAdd)
@@ -33,7 +41,7 @@ namespace AdminBot.Core
                     guildData.Xp += xpToAdd;
                     // Check if the XP is enough to level up
                     // if the xp in guildData is greater than or equal to the xp needed to level up
-                    if (guildData.Xp >= CalculateXpToNextLevel(guildData.Level))
+                    if (guildData.Xp >= XpToNextLevel(guildData.Level))
                     {
                         // Call LevelUp method
                         await LevelUp(guildData);
