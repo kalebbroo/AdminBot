@@ -10,6 +10,8 @@ namespace AdminBot.Core
         // Holds a reference to the Discord client to interact with the Discord API.
         private readonly DiscordSocketClient _client;
         private readonly Database _database;
+        private readonly XpLevels _xpLevels;
+        private readonly Random _random = new();
 
         // Constructor that takes the Discord client as a parameter.
         // This allows the Listeners class to use the client passed from elsewhere in the bot.
@@ -17,6 +19,7 @@ namespace AdminBot.Core
         {
             _client = client; // Saves the passed client for use in this class.
             _database = database;
+            _xpLevels = new XpLevels(database);
         }
 
         // Subscribe to events we want to listen to.
@@ -25,7 +28,17 @@ namespace AdminBot.Core
             // Subscribes to the event with our custom methods.
             _client.GuildMemberUpdated += OnGuildMemberUpdatedAsync;
             _client.UserJoined += OnUserJoinedAsync;
+            _client.MessageReceived += OnMessageReceivedAsync;
+            _client.ReactionAdded += OnReactionAddedAsync;
+        }
 
+        private async Task ParseXpForActivity(ulong userId, ulong guildId, int minXP, int maxXP)
+        {
+            int xpToAdd = _random.Next(minXP, maxXP + 1);
+            await _xpLevels.AddXp(userId, guildId, xpToAdd);
+            
+            Console.WriteLine($"Awarded {xpToAdd} XP to user {userId} in guild {guildId}.");
+            
         }
 
         // This method is called whenever a user's information changes.
@@ -68,6 +81,34 @@ namespace AdminBot.Core
             var userdata = await _database.GetUserData(userid, guildid);
             //var collection = _database.GetCollection<UserData>("Users");
             await _database.UpdateAddUser(userdata);
+        }
+
+        // This method is called whenever a message is received.
+        private async Task OnMessageReceivedAsync(SocketMessage message)
+        {
+            // Make sure the message is from a user and not a bot.
+            if (message is not SocketUserMessage userMessage || message.Author.IsBot || userMessage.Content.Length < 20)
+            {
+                return; // Also checks message length
+            }
+            await ParseXpForActivity(message.Author.Id, (message.Channel as SocketGuildChannel).Guild.Id, 3, 10);
+        }
+
+        // This method is called whenever a reaction is added to a message.
+        private async Task OnReactionAddedAsync(
+            Cacheable<IUserMessage, ulong> cacheableMessage, // This is the message to which the reaction was added. It's "cacheable,"
+                                                             // meaning the message data might be stored in memory for quick access.
+            Cacheable<IMessageChannel, ulong> cacheableChannel, // This is the channel where the reaction occurred. Also "cacheable,"
+            SocketReaction reaction) // Contains information about the reaction itself, like who reacted and with what emoji.
+        {
+            // Tries to retrieve the channel data from the cache or download it from Discord if it's not already cached.
+            var channel = await cacheableChannel.GetOrDownloadAsync();
+
+            // After getting the channel, we cast it to a SocketGuildChannel.
+            // The cast is safe to perform because reaction events only occur in guild channels where messages can be reacted to.
+            // Casting means we're telling the compiler to treat the IMessageChannel as a SocketGuildChannel.
+            await ParseXpForActivity(reaction.UserId, (channel as SocketGuildChannel).Guild.Id,
+                1, 5); // Specifies the range of XP to award. In this case, a random amount between 1 and 5 XP will be awarded for adding a reaction.
         }
 
     }

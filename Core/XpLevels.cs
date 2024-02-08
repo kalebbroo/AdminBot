@@ -11,6 +11,7 @@ namespace AdminBot.Core
         private readonly Database _database;
         private readonly int BaseXp;
         private readonly double XpMultiplier;
+        private readonly Dictionary<ulong, DateTime> _lastXpGain = new();
 
         /* XpLevels constructor
          * A constructor that takes a Database object as a parameter.
@@ -31,21 +32,31 @@ namespace AdminBot.Core
 
         public async Task AddXp(ulong userId, ulong guildId, int xpToAdd)
         {
+            // Check if the user has gained XP within the last 5 seconds
+            // This is to prevent spamming and abuse
+            if (_lastXpGain.TryGetValue(userId, out var lastGainTime))
+            {
+                TimeSpan cooldown = TimeSpan.FromSeconds(5); // 5-second cooldown
+                if ((DateTime.UtcNow - lastGainTime) < cooldown)
+                {
+                    Console.WriteLine($"Cooldown in effect for user {userId}. XP not added.");
+                    return; // Return if the cooldown is still in effect
+                }
+            }
             var userData = await _database.GetUserData(userId, guildId);
             if (userData != null)
             {
-                // TODO: Loop through all guilds in the user data and find the guild with the matching guildId
                 var guildData = userData.Guilds.FirstOrDefault(g => g.GuildId == guildId);
                 if (guildData != null)
                 {
                     guildData.Xp += xpToAdd;
-                    // Check if the XP is enough to level up
-                    // if the xp in guildData is greater than or equal to the xp needed to level up
                     if (guildData.Xp >= XpToNextLevel(guildData.Level))
                     {
-                        // Call LevelUp method
                         await LevelUp(guildData);
                     }
+
+                    // Update the cooldown time for the user
+                    _lastXpGain[userId] = DateTime.UtcNow;
 
                     // Save updated user data to the database
                     await _database.UpdateAddUser(userData);
