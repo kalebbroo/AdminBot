@@ -89,7 +89,8 @@ namespace AdminBot.Core
             // TODO: Add the user to the DB if they are not already in it.
             ulong userid = user.Id;
             ulong guildid = user.Guild.Id;
-            var (userdata, collection) = await _database.GetUserData(userid, guildid);
+            string username = user.Username;
+            var (userdata, collection) = await _database.GetUserData(userid, guildid, username);
             //var collection = _database.GetCollection<UserData>("Users");
             await _database.UpdateAddUser(userdata, collection);
         }

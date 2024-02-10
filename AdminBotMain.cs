@@ -34,7 +34,7 @@ namespace AdminBot
             // Create a new instance of DiscordSocketClient, pass in config.
             _client = new DiscordSocketClient(config);
             // Initialize the Database
-            _database = new Database(_client);
+            _database = new Database();
             // Create a new instance of InteractionService, pass in _client. Needed for interactions.
             _interactions = new InteractionService(_client);
 
@@ -47,7 +47,7 @@ namespace AdminBot
             };
 
             // Instantiate your Listeners class and register the listeners
-            var database = new Database(_client);
+            var database = new Database();
             var listeners = new Listeners(_client, database);
             var xpLevels = new XpLevels(_client, database);
             listeners.RegisterListeners();

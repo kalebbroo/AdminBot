@@ -11,9 +11,8 @@ namespace AdminBot.Core
     internal class Database
     {
         private readonly MongoClient mongoClient;
-        private readonly DiscordSocketClient _client;
 
-        public Database(DiscordSocketClient _client)
+        public Database()
         {
             // Retrieve the URI from the .env file
             var connectionString = Environment.GetEnvironmentVariable("MONGODB_URI");
@@ -55,7 +54,7 @@ namespace AdminBot.Core
          * Takes a userId and returns the user's data from the database
          * This is meant to be the starting point for any user data retrieval
          */
-        public async Task<(UserData userData, IMongoCollection<UserData> usersCollection)> GetUserData(ulong userId, ulong guildId)
+        public async Task<(UserData userData, IMongoCollection<UserData> usersCollection)> GetUserData(ulong userId, ulong guildId, string username)
         {
             // Get the "Users" collection from the database
             var usersCollection = GetCollection<UserData>("Users");
@@ -66,11 +65,10 @@ namespace AdminBot.Core
             // Find the user data in the collection
             // Takes usersCollection and filter, finds the first document that matches the filter
             var userData = await usersCollection.Find(filter).FirstOrDefaultAsync();
-            var username = _client.GetGuild(guildId).GetUser(userId).Username;
 
             if (userData is null)
             {
-                Console.WriteLine($"User {userId} not found in the database.");
+                Console.WriteLine($"User {username} not found. Adding user to the database...");
                 // add default user data to the database and return that
                 userData = new UserData
                 {
@@ -102,8 +100,6 @@ namespace AdminBot.Core
 
             var updateOptions = new ReplaceOptions { IsUpsert = true };
             await usersCollection.ReplaceOneAsync(filter, userData, updateOptions);
-
-            Console.WriteLine($"User {userData.Username} updated or added to the database.");
         }
     }
 

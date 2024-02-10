@@ -36,21 +36,22 @@ namespace AdminBot.Core
         public async Task AddXp(ulong userId, ulong guildId, int xpToAdd)
         {
             var displayName = _client.GetGuild(guildId).GetUser(userId).DisplayName ?? "none";// maybe make this userid?
+            var username = _client.GetGuild(guildId).GetUser(userId).Username ?? "none";
             if (_lastXpGain.TryGetValue(userId, out var lastGainTime))
             {
                 TimeSpan cooldown = TimeSpan.FromSeconds(5);
                 if ((DateTime.UtcNow - lastGainTime) < cooldown)
                 {
-                    Console.WriteLine($"Cooldown in effect for user {displayName}. XP not added.");
+                    Console.WriteLine($"Cooldown in effect for user {username}. XP not added.");
                     return;
                 }
                 else
                 {
-                    Console.WriteLine($"Added {xpToAdd}XP to user: {displayName}");
+                    Console.WriteLine($"Added {xpToAdd}XP to user: {username}");
                 }
             }
 
-            var (userData, collection) = await _database.GetUserData(userId, guildId);
+            var (userData, collection) = await _database.GetUserData(userId, guildId, username);
             if (userData != null)
             {
                 var guildData = userData.Guilds.FirstOrDefault(g => g.GuildId == guildId);
