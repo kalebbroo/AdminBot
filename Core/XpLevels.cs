@@ -24,7 +24,7 @@ namespace AdminBot.Core
         {
             _client = client;
             _database = database;
-            BaseXp = int.Parse(Environment.GetEnvironmentVariable("BASE_XP") ?? "100");
+            BaseXp = int.Parse(Environment.GetEnvironmentVariable("BASE_XP") ?? "10");
             XpMultiplier = double.Parse(Environment.GetEnvironmentVariable("XP_MULTIPLIER") ?? "1.5");
         }
         public int XpToNextLevel(int level)
@@ -60,8 +60,9 @@ namespace AdminBot.Core
                     guildData.Xp += xpToAdd; // Add XP to the total
 
                     // Check if the total XP is equal to or exceeds the amount needed for the next level
-                    while (guildData.Xp >= XpToNextLevel(guildData.Level + 1))
+                    while (guildData.Xp >= XpToNextLevel(guildData.Level))
                     {
+                        Console.WriteLine($"User {displayName} has enough XP to level up.");
                         await LevelUp(guildData, userId); // Level up if enough XP has been accumulated
                     }
 
@@ -75,7 +76,8 @@ namespace AdminBot.Core
         {
             // Use XpToNextLevel to get the XP needed for the current level
             // TODO: Add this info to the level up message
-            int xpNextLevel = XpToNextLevel(guildData.Level);
+            int xpForNextLevel = XpToNextLevel(guildData.Level + 1);
+            int xpNeededForNextLevel = xpForNextLevel - guildData.Xp;
 
             // Increment the user's level
             guildData.Level++;
@@ -83,6 +85,7 @@ namespace AdminBot.Core
             var displayName = _client.GetGuild(guildId).GetUser(userId).DisplayName ?? "none";
             // TODO: Add a message to the user that they leveled up maybe even an image
             Console.WriteLine($"User {displayName} leveled up to level {guildData.Level}.");
+            Console.WriteLine($"{displayName} is at level {guildData.Level} and has {guildData.Xp} XP. They need {xpNeededForNextLevel} more XP to level up to level {guildData.Level + 1}.");
         }
     }
 
