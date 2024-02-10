@@ -19,7 +19,7 @@ namespace AdminBot.Core
         {
             _client = client; // Saves the passed client for use in this class.
             _database = database;
-            _xpLevels = new XpLevels(database);
+            _xpLevels = new XpLevels(client, database);
         }
 
         // Subscribe to events we want to listen to.
@@ -36,8 +36,6 @@ namespace AdminBot.Core
         {
             int xpToAdd = _random.Next(minXP, maxXP + 1);
             await _xpLevels.AddXp(userId, guildId, xpToAdd);
-            
-            Console.WriteLine($"Awarded {xpToAdd} XP to user {userId} in guild {guildId}.");
             
         }
 
@@ -78,9 +76,9 @@ namespace AdminBot.Core
             // TODO: Add the user to the DB if they are not already in it.
             ulong userid = user.Id;
             ulong guildid = user.Guild.Id;
-            var userdata = await _database.GetUserData(userid, guildid);
+            var (userdata, collection) = await _database.GetUserData(userid, guildid);
             //var collection = _database.GetCollection<UserData>("Users");
-            await _database.UpdateAddUser(userdata);
+            await _database.UpdateAddUser(userdata, collection);
         }
 
         // This method is called whenever a message is received.

@@ -52,8 +52,8 @@ namespace AdminBot.Core
         /* The method to get the user data from the database
          * Takes a userId and returns the user's data from the database
          * This is meant to be the starting point for any user data retrieval
-         */ 
-        public async Task<UserData> GetUserData(ulong userId, ulong guildId)
+         */
+        public async Task<(UserData userData, IMongoCollection<UserData> usersCollection)> GetUserData(ulong userId, ulong guildId)
         {
             // Get the "Users" collection from the database
             var usersCollection = GetCollection<UserData>("Users");
@@ -85,13 +85,13 @@ namespace AdminBot.Core
                         }
                     }
                 };
+                await UpdateAddUser(userData, usersCollection);
             }
-            return userData;
+            return (userData, usersCollection);
         }
-
-        public async Task UpdateAddUser(UserData userData)
+        // pass mongobd collection to the method and userdata
+        public async Task UpdateAddUser(UserData userData, IMongoCollection<UserData> usersCollection)
         {
-            var usersCollection = GetCollection<UserData>("Users");
             var filter = Builders<UserData>.Filter.Eq(u => u.UserId, userData.UserId);
 
             var updateOptions = new ReplaceOptions { IsUpsert = true };
