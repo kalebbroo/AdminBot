@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
@@ -9,9 +10,10 @@ namespace AdminBot.Core
 {
     internal class Database
     {
-        private readonly MongoClient client;
+        private readonly MongoClient mongoClient;
+        private readonly DiscordSocketClient _client;
 
-        public Database()
+        public Database(DiscordSocketClient _client)
         {
             // Retrieve the URI from the .env file
             var connectionString = Environment.GetEnvironmentVariable("MONGODB_URI");
@@ -24,14 +26,14 @@ namespace AdminBot.Core
             else
             {
                 // Initialize the MongoClient with the URI
-                client = new MongoClient(connectionString);
+                mongoClient = new MongoClient(connectionString);
             }
 
             // Check the connection
             try
             {
                 Console.WriteLine("Connecting to MongoDB...");
-                client.GetDatabase("AdminBot").RunCommandAsync((Command<BsonDocument>)"{ping:1}").Wait();
+                mongoClient.GetDatabase("AdminBot").RunCommandAsync((Command<BsonDocument>)"{ping:1}").Wait();
                 Console.WriteLine("Connected to MongoDB.");
             }
             catch (Exception ex)
@@ -45,7 +47,7 @@ namespace AdminBot.Core
         // Access the database and collection
         public IMongoCollection<T> GetCollection<T>(string name)
         {
-            var database = client.GetDatabase("AdminBot");
+            var database = mongoClient.GetDatabase("AdminBot");
             return database.GetCollection<T>(name);
         }
 
@@ -57,11 +59,14 @@ namespace AdminBot.Core
         {
             // Get the "Users" collection from the database
             var usersCollection = GetCollection<UserData>("Users");
+            // Convert the userId to a string
+            var stringId = userId.ToString();
             // Create a filter to find the user by their userId
-            var filter = Builders<UserData>.Filter.Eq("userId", userId);
+            var filter = Builders<UserData>.Filter.Eq("_id", stringId);
             // Find the user data in the collection
             // Takes usersCollection and filter, finds the first document that matches the filter
             var userData = await usersCollection.Find(filter).FirstOrDefaultAsync();
+            var username = _client.GetGuild(guildId).GetUser(userId).Username;
 
             if (userData is null)
             {
@@ -69,7 +74,8 @@ namespace AdminBot.Core
                 // add default user data to the database and return that
                 userData = new UserData
                 {
-                    UserId = userId,
+                    Id = stringId,
+                    Username = username,
                     Guilds = new List<GuildData>
                     {
                         new GuildData
@@ -92,12 +98,12 @@ namespace AdminBot.Core
         // pass mongobd collection to the method and userdata
         public async Task UpdateAddUser(UserData userData, IMongoCollection<UserData> usersCollection)
         {
-            var filter = Builders<UserData>.Filter.Eq(u => u.UserId, userData.UserId);
+            var filter = Builders<UserData>.Filter.Eq("_id", userData.Id);
 
             var updateOptions = new ReplaceOptions { IsUpsert = true };
             await usersCollection.ReplaceOneAsync(filter, userData, updateOptions);
 
-            Console.WriteLine($"User {userData.UserId} updated or added to the database.");
+            Console.WriteLine($"User {userData.Username} updated or added to the database.");
         }
     }
 
@@ -118,11 +124,11 @@ namespace AdminBot.Core
     public class UserData
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
+        [BsonRepresentation(BsonType.String)]
         public string Id { get; set; }
 
-        [BsonElement("userId")]
-        public ulong UserId { get; set; }
+        [BsonElement("username")]
+        public string Username { get; set; }
 
         [BsonElement("guilds")]
         public List<GuildData> Guilds { get; set; }
@@ -190,7 +196,8 @@ namespace AdminBot.Core
 ├───Collection: Users
 │   │   Document: User
 │   │   {
-│   │       "userId": "UniqueUserIdentifier", // Discord User ID
+|   │       "_id": "UniqueUserIdentifier", // Discord User ID
+│   │       "username": "UniqueUserIdentifier", // Discord Username
 │   │       "guilds": [
 │   │           {
 │   │               "guildId": "GuildIdentifier1",

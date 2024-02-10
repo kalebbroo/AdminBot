@@ -73,7 +73,8 @@ namespace AdminBot.Core
         public async Task LevelUp(GuildData guildData, ulong userId)
         {
             // Use XpToNextLevel to get the XP needed for the current level
-            int xpNeededForCurrentLevel = XpToNextLevel(guildData.Level);
+            // TODO: Add this info to the level up message
+            int xpNextLevel = XpToNextLevel(guildData.Level);
 
             // Increment the user's level
             guildData.Level++;

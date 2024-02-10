@@ -7,19 +7,32 @@ namespace AdminBot.Core
 {
     internal class Listeners
     {
-        // Holds a reference to the Discord client to interact with the Discord API.
+        /*
+         * private readonly Variables: These lines declare some special variables inside our "Listeners" class.
+         * Each one stores an important piece of information or tool that the "Listeners" object will use
+         */
+
+        // Think of '_client' as our bot's way to talk and listen to Discord. 
         private readonly DiscordSocketClient _client;
         private readonly Database _database;
         private readonly XpLevels _xpLevels;
         private readonly Random _random = new();
 
-        // Constructor that takes the Discord client as a parameter.
-        // This allows the Listeners class to use the client passed from elsewhere in the bot.
-        public Listeners(DiscordSocketClient client, Database database)
+        /* 
+         * Special method called a 'constructor'.
+         * It's automatically called when a new 'Listeners' object is created.
+        */
+    public Listeners(DiscordSocketClient client, Database database)
         {
-            _client = client; // Saves the passed client for use in this class.
-            _database = database;
-            _xpLevels = new XpLevels(client, database);
+            /*
+             * Inside the constructor, There are two parameters: 'client' and 'database'.
+             * They are what our 'Listeners' object needs to work properly.
+             */
+
+            _client = client; // Here, we're taking the 'client' that was passed in and saving it inside our object. So it can be used later. 
+            _database = database; // Similarly, we take the 'database' ans save it inside our object.
+            _xpLevels = new XpLevels(client, database); // Lastly, we're creating a new 'XpLevels' object right inside our constructor.
+                                                        // We're also passing it the 'client' and 'database'
         }
 
         // Subscribe to events we want to listen to.
