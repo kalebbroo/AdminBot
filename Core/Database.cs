@@ -93,7 +93,8 @@ namespace AdminBot.Core
             }
             return (userData, usersCollection);
         }
-        // pass mongobd collection to the method and userdata
+
+        // Pass mongobd collection to the method and userdata
         public async Task UpdateAddUser(UserData userData, IMongoCollection<UserData> usersCollection)
         {
             var filter = Builders<UserData>.Filter.Eq("_id", userData.Id);

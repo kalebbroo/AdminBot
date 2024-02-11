@@ -85,7 +85,8 @@ namespace AdminBot.Core
             var displayName = _client.GetGuild(guildId).GetUser(userId).DisplayName ?? "none";
             // TODO: Add a message to the user that they leveled up maybe even an image
             Console.WriteLine($"User {displayName} leveled up to level {guildData.Level}.");
-            Console.WriteLine($"{displayName} is at level {guildData.Level} and has {guildData.Xp} XP. They need {xpNeededForNextLevel} more XP to level up to level {guildData.Level + 1}.");
+            Console.WriteLine($"{displayName} is at level {guildData.Level} and has {guildData.Xp} XP. " +
+                $"They need {xpNeededForNextLevel} more XP to level up to level {guildData.Level + 1}.");
         }
     }
 

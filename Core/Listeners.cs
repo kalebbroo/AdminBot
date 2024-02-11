@@ -61,13 +61,23 @@ namespace AdminBot.Core
             // Checks if we successfully got the 'before' state and if the nickname has changed.
             if (before != null && before.Nickname != after.Nickname)
             {
-                // TODO: Maybe use username instead of none if no nickname is set?
-                string beforeNickname = before.Nickname ?? "none"; // Uses "none" if no nickname was set before.
-                string afterNickname = after.Nickname ?? "none"; // Uses "none" if no nickname is set now.
-
                 // Sends a message to the server's default channel about the nickname change.
                 // TODO: Use the DB to get the channel and to save user info.
-                await after.Guild.DefaultChannel.SendMessageAsync($"User {after.Mention} has changed their nickname from {beforeNickname} to {afterNickname}.");
+                ulong guildId = after.Guild.Id;
+                ulong userId = after.Id;
+                string username = after.Username;
+                string beforeNickname = before.Nickname ?? username; // Uses "none" if no nickname was set before.
+                string afterNickname = after.Nickname ?? username; // Uses "none" if no nickname is set now.
+                var (userData, userCollection) = await _database.GetUserData(userId, guildId, after.Username);
+                var guildData = userData.Guilds.FirstOrDefault(g => g.GuildId == guildId);
+                guildData.DisplayNameChanges++;
+                await _database.UpdateAddUser(userData, userCollection);
+
+                var channel = after.Guild.TextChannels.FirstOrDefault(x => x.Name == "bot_spam") ?? after.Guild.DefaultChannel;
+
+                await channel.SendMessageAsync(
+                    $"User {username} has changed their nickname from {beforeNickname} to {afterNickname}. " +
+                    $"They have changed nicknames {guildData.DisplayNameChanges} times. Their new identity has been secured.");
             }
         }
 
@@ -103,7 +113,13 @@ namespace AdminBot.Core
             {
                 return; // Also checks message length
             }
-            await ParseXpForActivity(message.Author.Id, (message.Channel as SocketGuildChannel).Guild.Id, 3, 10);
+            ulong guildId = (message.Channel as SocketGuildChannel).Guild.Id;
+            ulong userId = message.Author.Id;
+            await ParseXpForActivity(userId, guildId, 3, 10);
+            var (userData, userCollection) = await _database.GetUserData(userId, guildId, message.Author.Username);
+            var guildData = userData.Guilds.FirstOrDefault(g => g.GuildId == guildId);
+            guildData.MessagesSent++;
+            await _database.UpdateAddUser(userData, userCollection);
         }
 
         // This method is called whenever a reaction is added to a message.
@@ -121,6 +137,12 @@ namespace AdminBot.Core
             // Casting means we're telling the compiler to treat the IMessageChannel as a SocketGuildChannel.
             await ParseXpForActivity(reaction.UserId, (channel as SocketGuildChannel).Guild.Id,
                 1, 5); // Specifies the range of XP to award. In this case, a random amount between 1 and 5 XP will be awarded for adding a reaction.
+            ulong guildId = (channel as SocketGuildChannel).Guild.Id;
+            ulong userId = reaction.UserId;
+            var (userData, userCollection) = await _database.GetUserData(userId, guildId, reaction.User.Value.Username);
+            var guildData = userData.Guilds.FirstOrDefault(g => g.GuildId == guildId);
+            guildData.ReactionsMade++;
+            await _database.UpdateAddUser(userData, userCollection);
         }
 
     }
