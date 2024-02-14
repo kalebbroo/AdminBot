@@ -101,7 +101,6 @@ namespace AdminBot.Core
             ulong guildid = user.Guild.Id;
             string username = user.Username;
             var (userdata, collection) = await _database.GetUserData(userid, guildid, username);
-            //var collection = _database.GetCollection<UserData>("Users");
             await _database.UpdateAddUser(userdata, collection);
         }
 

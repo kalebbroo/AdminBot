@@ -1,5 +1,9 @@
 using Discord.Interactions;
 using Discord;
+using OpenAI_API;
+using Discord.Audio;
+using OpenAI_API.Audio;
+using static OpenAI_API.Audio.TextToSpeechRequest;
 
 
 namespace AdminBot.Core
@@ -100,11 +104,58 @@ namespace AdminBot.Core
             await RulesChannel.SendMessageAsync(embed: embed);
         }
 
-        [SlashCommand("ping", "Test command")]
-        public async Task Ping()
-        {
-            await RespondAsync("Pong!", ephemeral: true);
-        }
+        [SlashCommand("tts", "Text to Speech")]
+        public async Task TTS(
+        [Summary("text", "The text that will be converted to audio")] string text,
+        [Summary("voice", "The voice that will be used to speak")]
+        [Choice("Alloy", "alloy"),
+         Choice("Echo", "echo"),
+         Choice("Fable", "fable"),
+         Choice("Onyx", "onyx"),
+         Choice("Nova", "nova"),
+         Choice("Shimmer", "shimmer")
+         ] string voice = "alloy")
+        {   
+            try
+            {
+                var apiKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
+                Console.WriteLine($"OpenAI API Key: {apiKey}");
+                var _openAIClient = new OpenAIAPI(apiKey);
+                Console.WriteLine("OpenAI API Key found and initialized");           
+            
+                var voiceState = (Context.User as IGuildUser)?.VoiceChannel;
+                if (voiceState == null)
+                {
+                    await RespondAsync("You must be in a voice channel to use this command.");
+                    return;
+                }
+                text = string.Join(" ", text);
+                var request = new TextToSpeechRequest()
+                {
+                    Input = text,
+                    ResponseFormat = ResponseFormats.OPUS,
+                    Model = "tts-1", // The model to use for the request. The HD version is slower
+                    Voice = voice, // Lets the user choose which voice to use
+                    Speed = 0.9
+                };
+                // Get the audio stream directly
+                using (Stream result = await _openAIClient.TextToSpeech.GetSpeechAsStreamAsync(request))
+                {
+                    var audioClient = await voiceState.ConnectAsync();
+                    var discordAudioStream = audioClient.CreateOpusStream();
 
+                    await result.CopyToAsync(discordAudioStream);
+                    await discordAudioStream.FlushAsync();
+                }
+
+                await RespondAsync($"Playing your text as speech with the {voice} voice in {voiceState.Name}.");
+                }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"OpenAI API connection test failed: {ex.Message}");
+                await RespondAsync("OpenAI API not initialized. Please check the logs for more information.");
+                return;
+            }
+        }
     }
 }
