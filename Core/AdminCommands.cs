@@ -118,7 +118,7 @@ namespace AdminBot.Core
         {   
             try
             {
-                var apiKey = "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";
+                var apiKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
                 Console.WriteLine($"OpenAI API Key: {apiKey}");
                 var _openAIClient = new OpenAIAPI(apiKey);
                 Console.WriteLine("OpenAI API Key found and initialized");           
