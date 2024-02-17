@@ -38,7 +38,7 @@ MONGODB_URI=<Your MongoDB URI> # If you are using Docker, Use the default URI (m
 OPENAI_KEY=<Your OpenAI API Key>
 ```
 
-Replace <Your Discord Bot Token>, <Your MongoDB URI>, and <Your OpenAI API Key> with your actual Discord bot token, MongoDB URI, and OpenAI API key respectively.
+Replace `Your Discord Bot Token`, `Your MongoDB URI`, and `Your OpenAI API Key` with your actual Discord bot token, MongoDB URI, and OpenAI API key respectively.
 
 ## Running with Docker
 Open the Docker folder run the 1-click install script. This will build the Docker image and run the bot in a Docker container.
