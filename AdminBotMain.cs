@@ -108,7 +108,7 @@ namespace AdminBot
 
                     // Get the ID of the first guild the bot is a member of
                     // Then register the commands to that guild
-                    var guildId = _client.Guilds.First(x => x.Id == 707260999496892436).Id;
+                    var guildId = _client.Guilds.First().Id;
                     await _interactions.RegisterCommandsToGuildAsync(guildId, true);
                     //await _interactions.RegisterCommandsGloballyAsync(true);
                 }
