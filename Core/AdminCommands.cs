@@ -1,16 +1,20 @@
+
 using Discord.Interactions;
+using System.Diagnostics;
 using Discord;
 using OpenAI_API;
-using Discord.Audio;
 using OpenAI_API.Audio;
 using static OpenAI_API.Audio.TextToSpeechRequest;
+
 
 
 namespace AdminBot.Core
 {
     public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
-
     {
+
+        public VoiceService VoiceService { get; set;}
+
         [SlashCommand("setup_rules", "Sets up the rules for the server")]
         public async Task SetupRules()
         {
@@ -118,6 +122,7 @@ namespace AdminBot.Core
         {   
             try
             {
+                await Context.Interaction.RespondAsync("Creating audio file...");
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
                 Console.WriteLine($"OpenAI API Key: {apiKey}");
                 var _openAIClient = new OpenAIAPI(apiKey);
@@ -130,26 +135,38 @@ namespace AdminBot.Core
                     return;
                 }
                 text = string.Join(" ", text);
+
                 var request = new TextToSpeechRequest()
                 {
                     Input = text,
-                    ResponseFormat = ResponseFormats.OPUS,
+                    ResponseFormat = ResponseFormats.MP3,
                     Model = "tts-1", // The model to use for the request. The HD version is slower
                     Voice = voice, // Lets the user choose which voice to use
                     Speed = 0.9
                 };
-                // Get the audio stream directly
-                using (Stream result = await _openAIClient.TextToSpeech.GetSpeechAsStreamAsync(request))
-                {
-                    var audioClient = await voiceState.ConnectAsync();
-                    var discordAudioStream = audioClient.CreateOpusStream();
 
-                    await result.CopyToAsync(discordAudioStream);
-                    await discordAudioStream.FlushAsync();
-                }
+                // First save the TTS file
+                await _openAIClient.TextToSpeech.SaveSpeechToFileAsync(request, "tts.mp3").ContinueWith(async x => {
+                    
+                    // After we are done saving we want to send the file through our voice service which processes it into the right codec.
+                    
+                    // First we create some feedback though
+                    var resp = await Context.Interaction.GetOriginalResponseAsync();
+                    await resp.ModifyAsync(x => {
+                        x.Content = $"Playing your text as speech with the {voice} voice in {voiceState.Name}.";
+                    });
 
-                await RespondAsync($"Playing your text as speech with the {voice} voice in {voiceState.Name}.");
-                }
+                    // Send Audio
+                    using (var audioClient = await voiceState.ConnectAsync())
+                    {
+
+                        await VoiceService.SendVoiceFile(audioClient, "tts.mp3");
+
+                    }
+
+                });
+                
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"OpenAI API connection test failed: {ex.Message}");
