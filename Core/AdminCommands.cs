@@ -146,25 +146,24 @@ namespace AdminBot.Core
                 };
 
                 // First save the TTS file
-                await _openAIClient.TextToSpeech.SaveSpeechToFileAsync(request, "tts.mp3").ContinueWith(async x => {
-                    
-                    // After we are done saving we want to send the file through our voice service which processes it into the right codec.
-                    
-                    // First we create some feedback though
-                    var resp = await Context.Interaction.GetOriginalResponseAsync();
-                    await resp.ModifyAsync(x => {
-                        x.Content = $"Playing your text as speech with the {voice} voice in {voiceState.Name}.";
-                    });
+                await _openAIClient.TextToSpeech.SaveSpeechToFileAsync(request, "tts.mp3");
 
-                    // Send Audio
-                    using (var audioClient = await voiceState.ConnectAsync())
-                    {
-
-                        await VoiceService.SendVoiceFile(audioClient, "tts.mp3");
-
-                    }
-
+                // After we are done saving we want to send the file through our voice service which processes it into the right codec.
+                
+                // First we create some feedback though
+                var resp = await Context.Interaction.GetOriginalResponseAsync();
+                await resp.ModifyAsync(x => {
+                    x.Content = $"Playing your text as speech with the {voice} voice in {voiceState.Name}.";
                 });
+
+                // Send Audio
+                using (var audioClient = await voiceState.ConnectAsync())
+                {
+
+                    await VoiceService.SendVoiceFile(audioClient, "tts.mp3");
+
+                }
+
                 
             }
             catch (Exception ex)
