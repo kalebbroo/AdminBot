@@ -122,7 +122,7 @@ namespace AdminBot.Core
         {   
             try
             {
-                await Context.Interaction.RespondAsync("Creating audio file...");
+                await Context.Interaction.RespondAsync("Creating and sending audio please wait...");
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
                 Console.WriteLine($"OpenAI API Key: {apiKey}");
                 var _openAIClient = new OpenAIAPI(apiKey);
@@ -153,7 +153,7 @@ namespace AdminBot.Core
                 // First we create some feedback though
                 var resp = await Context.Interaction.GetOriginalResponseAsync();
                 await resp.ModifyAsync(x => {
-                    x.Content = $"Playing your text as speech with the {voice} voice in {voiceState.Name}.";
+                    x.Content = $"User: **{Context.User.Username}** used TTS to say: \n**{text}** with the **{voice}** voice.";
                 });
 
                 // Send Audio
@@ -169,7 +169,7 @@ namespace AdminBot.Core
             catch (Exception ex)
             {
                 Console.WriteLine($"OpenAI API connection test failed: {ex.Message}");
-                await RespondAsync("OpenAI API not initialized. Please check the logs for more information.");
+                await FollowupAsync("OpenAI API not initialized. Please check the logs for more information.");
                 return;
             }
         }
