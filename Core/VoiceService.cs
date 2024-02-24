@@ -45,11 +45,15 @@ namespace AdminBot.Core
     /// <returns></returns>
     public async Task SendVoiceFile(IAudioClient audioClient, string file) {
 
-      using (var ffmpeg = CreateStream(file))
-      using (var output = ffmpeg.StandardOutput.BaseStream)
-      using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed)) {
+      try {
+        using (var ffmpeg = CreateStream(file))
+        using (var output = ffmpeg.StandardOutput.BaseStream)
+        using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed)) {
           await output.CopyToAsync(discord);
           await discord.FlushAsync();
+        }
+      } catch (Exception e) {
+        Console.WriteLine(e);
       }
 
     }
