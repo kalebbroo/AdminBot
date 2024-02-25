@@ -5,6 +5,7 @@ using Discord;
 using OpenAI_API;
 using OpenAI_API.Audio;
 using static OpenAI_API.Audio.TextToSpeechRequest;
+using Discord.WebSocket;
 
 
 
@@ -13,7 +14,8 @@ namespace AdminBot.Core
     public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     {
 
-        public VoiceService VoiceService { get; set;}
+        public VoiceService VoiceService { get; set; }
+        public WarningSystem WarningSystem { get; set; }
 
         [SlashCommand("setup_rules", "Sets up the rules for the server")]
         public async Task SetupRules()
@@ -25,7 +27,7 @@ namespace AdminBot.Core
             {
                 // If the channel does not exist, create it and make that channel the RulesChannel variable
                 await Context.Guild.CreateTextChannelAsync("rules");
-                RulesChannel = Context.Guild.TextChannels.FirstOrDefault(x => x.Name == "rules");   
+                RulesChannel = Context.Guild.TextChannels.FirstOrDefault(x => x.Name == "rules");
             }
 
             // Get the previous message so admins can make small edits instead of retyping the whole thing
@@ -119,15 +121,15 @@ namespace AdminBot.Core
          Choice("Nova", "nova"),
          Choice("Shimmer", "shimmer")
          ] string voice = "alloy")
-        {   
+        {
             try
             {
                 await Context.Interaction.RespondAsync("Creating and sending audio please wait...");
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
                 Console.WriteLine($"OpenAI API Key: {apiKey}");
                 var _openAIClient = new OpenAIAPI(apiKey);
-                Console.WriteLine("OpenAI API Key found and initialized");           
-            
+                Console.WriteLine("OpenAI API Key found and initialized");
+
                 var voiceState = (Context.User as IGuildUser)?.VoiceChannel;
                 if (voiceState == null)
                 {
@@ -149,10 +151,11 @@ namespace AdminBot.Core
                 await _openAIClient.TextToSpeech.SaveSpeechToFileAsync(request, "tts.mp3");
 
                 // After we are done saving we want to send the file through our voice service which processes it into the right codec.
-                
+
                 // First we create some feedback though
                 var resp = await Context.Interaction.GetOriginalResponseAsync();
-                await resp.ModifyAsync(x => {
+                await resp.ModifyAsync(x =>
+                {
                     x.Content = $"User: **{Context.User.Username}** used TTS to say: \n**{text}** with the **{voice}** voice.";
                 });
 
@@ -164,13 +167,78 @@ namespace AdminBot.Core
 
                 }
 
-                
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"OpenAI API connection test failed: {ex.Message}");
                 await FollowupAsync("OpenAI API not initialized. Please check the logs for more information.");
                 return;
+            }
+        }
+
+        [SlashCommand("warn", "Give a user a warning or view their warnings")]
+        public async Task WarnUser(
+        [Summary("user", "Enter the user to list or give warnings")] IUser user,
+        [Summary("reason", "Enter the reason for the warning")] string reason = null,
+        [Summary("message_id", "The message ID to attach the warning to (optional)")] string messageIdInput = null)
+        {
+            var guildId = Context.Guild.Id;
+            var username = user.Username;
+            ulong userId = user.Id;
+            ulong adminId = Context.User.Id;
+            string messageContent = "Direct warning via command"; // Default message content
+            ulong messageId = Context.Interaction.Id; // Default to the interaction ID if no message ID is given
+
+            // Check if the admin provided a specific message ID and fetch its content
+            if (!string.IsNullOrEmpty(messageIdInput) && ulong.TryParse(messageIdInput, out ulong parsedMessageId))
+            {
+                messageId = parsedMessageId;
+                var message = await Context.Channel.GetMessageAsync(parsedMessageId) as IUserMessage;
+                if (message != null)
+                {
+                    messageContent = message.Content;
+                }
+            }
+
+            if (reason == null) // Just get a list of warnings for the specified user
+            {
+                var warnings = await WarningSystem.GetWarningsAsync(guildId, userId);
+                if (warnings.Count == 0)
+                {
+                    await RespondAsync($"{user.Username} has no warnings.", ephemeral:true);
+                    return;
+                }
+
+                var warningsEmbed = new EmbedBuilder()
+                    .WithTitle($"Displaying Warnings for {user.Username}")
+                    .WithColor(Color.DarkRed)
+                    .WithFooter(footer => footer.Text = $"Total warnings: {warnings.Count}")
+                    .WithCurrentTimestamp();
+
+                // TODO: Handle for the case a user has too many warnings to fit in the embed
+                foreach (var warning in warnings)
+                {
+                    warningsEmbed.AddField($"Warning ID: {warning.WarningId}", $"**Reason:** {warning.Reason}\n**Date:** {warning.Date}\n**Outcome:** {warning.Outcome}");
+                }
+
+                await RespondAsync(embed: warningsEmbed.Build());
+            }
+            else // Add a new warning for the specified user
+            {
+                await WarningSystem.AddWarningAsync(guildId, userId, username, reason, adminId, messageId, messageContent, "Pending");
+
+
+                var warningEmbed = new EmbedBuilder()
+                    .WithTitle($"New Warning for {user.Username}")
+                    //.WithDescription($"{reason}\n\n**Message ID:** {messageId}\n**Message Content:** {messageContent}")
+                    .WithDescription($"{reason}\n\n[Message Link](https://discord.com/channels/{Context.Guild.Id}/{Context.Channel.Id}/{messageId})\n\n**Message Content:** {messageContent}")
+                    .AddField("Admin that issued the warning", Context.User.Username, true)
+                    .WithColor(Color.DarkRed)
+                    .WithCurrentTimestamp()
+                    .Build();
+
+                await RespondAsync(embed: warningEmbed);
             }
         }
     }

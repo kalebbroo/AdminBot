@@ -8,7 +8,7 @@ using System;
 
 namespace AdminBot.Core
 {
-    internal class Database
+    public class Database
     {
         private readonly MongoClient mongoClient;
 

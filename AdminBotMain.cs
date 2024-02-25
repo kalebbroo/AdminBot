@@ -50,6 +50,7 @@ namespace AdminBot
                 .AddSingleton<Listeners>()
                 .AddSingleton<VoiceService>()
                 .AddSingleton<InteractionService>()
+                .AddSingleton<WarningSystem>()
                 .BuildServiceProvider();
 
             _interactions = _serviceProvider.GetRequiredService<InteractionService>();
